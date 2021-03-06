@@ -1,0 +1,40 @@
+#pragma once
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+
+#include <glBasics/shader.h>
+#include <glBasics/camera.h>
+
+#include <iostream>
+#include <filesystem>
+#include <vector>
+
+#include "KeyHandler.h"
+
+int initialization();
+void setupShadersTextures();
+void renderLoop();
+void onExit();
+
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void processInput(GLFWwindow* window);
+void handleKey(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+// Settings
+const unsigned int SCR_WIDTH = 1024;
+const unsigned int SCR_HEIGHT = 768;
+
+// Camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+float lastX = (float)SCR_WIDTH / 2.0;
+float lastY = (float)SCR_HEIGHT / 2.0;
+bool firstMouse = true;
+
+// Window
+GLFWwindow* window;
+
+// KeyHandler
+KeyHandler keyHandler;
