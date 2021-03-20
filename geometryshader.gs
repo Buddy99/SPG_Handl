@@ -22,7 +22,7 @@ vec3 vectors[13] = {
 
 // Second Lookup-Table
 // 256 (possible Marching Cube Cases) * 12 (12 points produce 4 triangles) = 3072
-// e.g.: three zeros in a row means no triangles
+// e.g.: three zeros in a row means no triangle
 int table[3072] = {
     0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  1,  2,  3,  0,  0,  0,  0,
     0,  0,  0,  0,  0,  4,  1,  5,  0,  0,  0,  0,  0,  0,  0,  0,  0,  3,  5,
@@ -201,7 +201,7 @@ void main(void)
         {
             gl_Position = proj * view * model * (base + vec4(vectors[table[index + i + j]], 0.0));
             varTextureG = varTexture[0];
-            EmitVertex();   // Vertex is reads
+            EmitVertex();   // Vertex is ready
         }
         EndPrimitive(); // Triangle is ready
     }

@@ -1,6 +1,6 @@
 #version 430
 
-// The vertexshader is called as often as the texture is large (in this case 64x64x64 times)
+// The vertexshader is called as often as the texture is large
 
 layout (binding = 0) uniform sampler3D tex; //  3D Texture
 

@@ -7,7 +7,7 @@ int main()
         return -1;
     }
 
-    generate3DTexture();
+    setupShadersTexturesBuffers();
 
     renderLoop();
 
@@ -57,11 +57,11 @@ int initialization()
     return 0;
 }
 
-void generate3DTexture()
+void setupShadersTexturesBuffers()
 {
     // Load shaders
 
-    // Generate 3D Texture using the rock-Shaders
+    // Shader for generating the 3D Texture on the GPU
     rockShader = new Shader();
     rockShader->load("rock.vs", "rock.fs");
 
@@ -77,7 +77,7 @@ void generate3DTexture()
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, TEX_WIDTH, TEX_HEIGHT, TEX_DEPTH, 0, GL_RED, GL_FLOAT, nullptr);  // 64x64x64... Texture Size
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, TEX_WIDTH, TEX_HEIGHT, TEX_DEPTH, 0, GL_RED, GL_FLOAT, nullptr);
 
     // Framebuffer
     glGenFramebuffers(1, &framebuffer);
@@ -89,12 +89,12 @@ void generate3DTexture()
     // VAO & VBO
     glGenVertexArrays(1, &VAORock);
     glGenBuffers(1, &VBORock);
-    // bind Vertex Array Object
+    // Bind Vertex Array Object
     glBindVertexArray(VAORock);
-    // copy the vertices array in a vertex buffer for OpenGL to use
+    // Copy the vertices array in a vertex buffer for OpenGL to use
     glBindBuffer(GL_ARRAY_BUFFER, VBORock);
     glBufferData(GL_ARRAY_BUFFER, sizeof(verticesRock), verticesRock, GL_STATIC_DRAW);
-    // set the vertex attributes pointers
+    // Set the vertex attributes pointers
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
     glBindVertexArray(0);
@@ -116,7 +116,7 @@ void renderLoop()
         // Set Viewport according to 3D Texture-Size
         glViewport(0, 0, TEX_WIDTH, TEX_HEIGHT); 
 
-        // use the rock Shader to generate the 3D texture on the GPU
+        // Use the rock Shader to generate the 3D texture on the GPU
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
         glClear(GL_COLOR_BUFFER_BIT);
         rockShader->use();
@@ -124,10 +124,10 @@ void renderLoop()
 
         for (int i = 0; i < TEX_DEPTH; i++)
         {
-            // set layer (depending on texture depth)
+            // Set layer (depending on texture depth)
             rockShader->setFloat("layer", float(i) / float(TEX_DEPTH - 1.0f));
 
-            // attach the texture to currently bound framebuffer object
+            // Attach the texture to currently bound framebuffer object
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
             glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, tex3D, 0, i);
 
@@ -186,7 +186,6 @@ void renderLoop()
         }
     }
 }
-
 
 void onExit()
 {
