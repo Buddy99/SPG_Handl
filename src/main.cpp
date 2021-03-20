@@ -51,6 +51,9 @@ int initialization()
     // Configure global opengl state
     glEnable(GL_DEPTH_TEST);
 
+    // Camera
+    camera.UpdateRotation({ 0.9f, -0.3f, -0.2f, 0.3f });
+
     return 0;
 }
 
@@ -74,7 +77,7 @@ void generate3DTexture()
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, 64, 64, 64, 0, GL_RED, GL_FLOAT, nullptr);  // 64x64x64... Texture Size
+    glTexImage3D(GL_TEXTURE_3D, 0, GL_R32F, TEX_WIDTH, TEX_HEIGHT, TEX_DEPTH, 0, GL_RED, GL_FLOAT, nullptr);  // 64x64x64... Texture Size
 
     // Framebuffer
     glGenFramebuffers(1, &framebuffer);
@@ -111,7 +114,7 @@ void renderLoop()
         processInput(window);
 
         // Set Viewport according to 3D Texture-Size
-        glViewport(0, 0, 64, 64); 
+        glViewport(0, 0, TEX_WIDTH, TEX_HEIGHT); 
 
         // use the rock Shader to generate the 3D texture on the GPU
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -119,10 +122,10 @@ void renderLoop()
         rockShader->use();
         rockShader->setFloat("height", height);
 
-        for (int i = 0; i < 64; i++)    // 64... Texture height
+        for (int i = 0; i < TEX_DEPTH; i++)
         {
-            // set layer (depending on texture height)
-            rockShader->setFloat("layer", i * (1.0f / 63.0f));
+            // set layer (depending on texture depth)
+            rockShader->setFloat("layer", float(i) / float(TEX_DEPTH - 1.0f));
 
             // attach the texture to currently bound framebuffer object
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -147,9 +150,15 @@ void renderLoop()
         // Generate Triangles using Marching Cubes Algorithm on GPU
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
         shader->use();
         shader->setMat4("proj", projection);
         shader->setMat4("view", view);
+        shader->setMat4("model", model);
+        shader->setInt("texWidth", TEX_WIDTH);
+        shader->setInt("texHeight", TEX_HEIGHT);
+        shader->setInt("texDepth", TEX_DEPTH);
 
         // Draw in Wireframe-Mode if Space is pressed
         if (wireframeMode)
@@ -161,7 +170,7 @@ void renderLoop()
         glBindTexture(GL_TEXTURE_3D, tex3D);
         //glPointSize(5.0f);
         glBindVertexArray(VAORock);      
-        glDrawArrays(GL_POINTS, 0, 64*64*64);   // draw points 
+        glDrawArrays(GL_POINTS, 0, TEX_WIDTH * TEX_HEIGHT * TEX_DEPTH);   // draw points 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
         // Glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -279,7 +288,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     lastX = xpos;
     lastY = ypos;
 
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    //camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 // Handle mouse scrolling

@@ -8,8 +8,7 @@ out vec4 fragColor;
 
 void main(void)
 {
-    // float f = texture(tex, varTextureG).r;
-
+    float f = texture(tex, varTextureG).r;
     // Set color according to Vertexposition (makes everything colourful)
-    fragColor = vec4(varTextureG, 1.0);
+    fragColor = vec4(varTextureG * f, 1.0);
 }

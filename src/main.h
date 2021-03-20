@@ -28,7 +28,7 @@ const unsigned int SCR_WIDTH = 1024;
 const unsigned int SCR_HEIGHT = 768;
 
 // Camera
-Camera camera(glm::vec3(0.0f, 0.0f, 6.0f));
+Camera camera(glm::vec3(20.0f, 15.0f, -10.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
@@ -57,7 +57,11 @@ unsigned int VBORock, VAORock;
 // framebuffer
 unsigned int framebuffer;
 
+// 3D Texture
 unsigned int tex3D;
+const unsigned int TEX_WIDTH = 96;
+const unsigned int TEX_DEPTH = 96;
+const unsigned int TEX_HEIGHT = 256;
 
 float height = 0;
 

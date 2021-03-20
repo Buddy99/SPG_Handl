@@ -5,6 +5,7 @@ layout (triangle_strip, max_vertices = 12) out; // out: Triangle Strips, max. 4 
 
 uniform mat4 proj;
 uniform mat4 view;
+uniform mat4 model;
 
 in vec3 varTexture[];
 in int mcCase[];    // Marching Cubes Case, 0-255
@@ -192,13 +193,13 @@ void main(void)
 {
     vec4 base = gl_in[0].gl_Position;
     int index = mcCase[0] * 12;
-    
+
     // Use Marching Cubes Case from the Vertexshader as Index for the Lookup-Tables
     for(int i = 0; i < 12; i += 3)  // Executed 4 times (max. 4 triangles)
     {
         for(int j = 0; j < 3; j++)  // Executed 3 times (each triangle contains 3 points)
         {
-            gl_Position = proj * view * (base + vec4(vectors[table[index + i + j]], 0.0));
+            gl_Position = proj * view * model * (base + vec4(vectors[table[index + i + j]], 0.0));
             varTextureG = varTexture[0];
             EmitVertex();   // Vertex is reads
         }
