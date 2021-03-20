@@ -50,6 +50,8 @@ int initialization()
 
     // Configure global opengl state
     glEnable(GL_DEPTH_TEST);
+
+    return 0;
 }
 
 void generate3DTexture()
@@ -62,7 +64,7 @@ void generate3DTexture()
 
     // Shader for Marching Cubes Algorithm on the GPU
     shader = new Shader();
-    shader->load("vertexshader.vs", "fragmentshader.fs"/*, "geometryshader.gs"*/);
+    shader->load("vertexshader.vs", "fragmentshader.fs", "geometryshader.gs");
 
     // 3D texture
     glGenTextures(1, &tex3D);
@@ -123,8 +125,8 @@ void renderLoop()
             rockShader->setFloat("layer", i * (1.0f / 63.0f));
 
             // attach the texture to currently bound framebuffer object
-            glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, tex3D, 0, i);
             glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+            glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, tex3D, 0, i);
 
             if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
             {
@@ -146,7 +148,7 @@ void renderLoop()
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         shader->use();
-        shader->setMat4("projection", projection);
+        shader->setMat4("proj", projection);
         shader->setMat4("view", view);
 
         // Draw in Wireframe-Mode if Space is pressed
@@ -214,12 +216,37 @@ void processInput(GLFWwindow* window)
     // Generate more of the 3D texture
     if (keyHandler.IsKeyDown(GLFW_KEY_W))
     {
-        //camera.ProcessKeyboard(Camera::Camera_Movement::UP, deltaTime);
-        height -= deltaTime;
+        camera.ProcessKeyboard(Camera::Camera_Movement::FORWARD, deltaTime);
+        
     }
     if (keyHandler.IsKeyDown(GLFW_KEY_S))
     {
-        //camera.ProcessKeyboard(Camera::Camera_Movement::DOWN, deltaTime);
+        camera.ProcessKeyboard(Camera::Camera_Movement::BACKWARD, deltaTime);
+    }
+    if (keyHandler.IsKeyDown(GLFW_KEY_A))
+    {
+        camera.ProcessKeyboard(Camera::Camera_Movement::LEFT, deltaTime);
+    }
+    if (keyHandler.IsKeyDown(GLFW_KEY_D))
+    {
+        camera.ProcessKeyboard(Camera::Camera_Movement::RIGHT, deltaTime);
+    }
+    if (keyHandler.IsKeyDown(GLFW_KEY_Q))
+    {
+        camera.ProcessKeyboard(Camera::Camera_Movement::UP, deltaTime);
+    }
+    if (keyHandler.IsKeyDown(GLFW_KEY_E))
+    {
+        camera.ProcessKeyboard(Camera::Camera_Movement::DOWN, deltaTime);
+    }
+
+    // Generate more of the 3D texture
+    if (keyHandler.IsKeyDown(GLFW_KEY_UP))
+    {
+        height -= deltaTime;
+    }
+    if (keyHandler.IsKeyDown(GLFW_KEY_DOWN))
+    {
         height += deltaTime;
     }
 
