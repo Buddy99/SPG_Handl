@@ -27,7 +27,9 @@ public:
         FORWARD,
         BACKWARD,
         LEFT,
-        RIGHT
+        RIGHT,
+        UP,
+        DOWN
     };
 
     // camera Attributes
@@ -93,6 +95,10 @@ public:
             Position -= Right * velocity;
         if (direction == Camera_Movement::RIGHT)
             Position += Right * velocity;
+        if(direction == Camera_Movement::UP)
+            Position += Up * velocity;
+        if(direction == Camera_Movement::DOWN)
+            Position -= Up * velocity;
     }
 
     // processes input received from a mouse input system. Expects the offset value in both the x and y direction.

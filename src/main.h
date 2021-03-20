@@ -13,7 +13,7 @@
 #include "KeyHandler.h"
 
 int initialization();
-void setupShadersTextures();
+void generate3DTexture();
 void renderLoop();
 void onExit();
 
@@ -28,13 +28,39 @@ const unsigned int SCR_WIDTH = 1024;
 const unsigned int SCR_HEIGHT = 768;
 
 // Camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 6.0f));
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
+
+// Light
+//glm::vec3 lightPos(-2.0f, 4.0f, -1.0f);
 
 // Window
 GLFWwindow* window;
 
 // KeyHandler
 KeyHandler keyHandler;
+
+// Shader
+Shader* rockShader;
+Shader* shader;
+
+// Timing
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+float currentFrame;
+
+// VBOs, VAOs and EBOs
+unsigned int VBORock, VAORock;
+
+// framebuffer
+unsigned int framebuffer;
+
+unsigned int tex3D;
+
+float height = 0;
+
+bool wireframeMode = false;
+
+float verticesRock[6][2] = { {-1.0f, -1.0f}, {-1.0, 1.0}, {1.0, -1.0}, {1.0f, 1.0f}, {-1.0, 1.0}, {1.0, -1.0} };
