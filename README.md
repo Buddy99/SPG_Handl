@@ -1,5 +1,5 @@
 # SPG_Handl  
-Shaderprogrammierung Projekt  
+Git-Repository: https://github.com/Buddy99/SPG_Handl  
   
 Steuerung:  
 Pfeiltaste rauf/runter: Erzeugung neuer Geometrie  
