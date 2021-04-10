@@ -52,7 +52,10 @@ int initialization()
     glEnable(GL_DEPTH_TEST);
 
     // Camera
-    camera.UpdateRotation({ 0.87f, -0.0f, -0.03f, 0.47f });
+    // camera.UpdateRotation({ 0.87f, -0.0f, -0.03f, 0.47f });
+    camera.Yaw = 90.0f;
+    camera.Pitch = -1.5f;
+    camera.updateCameraVectors();
 
     return 0;
 }
