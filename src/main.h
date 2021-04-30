@@ -83,6 +83,8 @@ unsigned int diffuseMap;
 unsigned int normalMap;
 unsigned int heightMap;
 
+Plane* wall;
+
 float heightScale = 0.1f;
 
 // Steps & Refinement Steps
