@@ -50,6 +50,8 @@ int initialization()
 
     // Configure global opengl state
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_MULTISAMPLE);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Camera
     // camera.UpdateRotation({ 0.87f, -0.0f, -0.03f, 0.47f });
@@ -66,15 +68,33 @@ void setupShadersTexturesBuffers()
 
     // Shader for generating the 3D Texture on the GPU
     rockShader = new Shader();
-    rockShader->load("rock.vs", "rock.fs");
+    rockShader->load("shader/rock.vs", "shader/rock.fs");
 
     // Shader for Marching Cubes Algorithm on the GPU
     shader = new Shader();
-    shader->load("vertexshader.vs", "fragmentshader.fs", "geometryshader.gs");
+    shader->load("shader/vertexshader.vs", "shader/fragmentshader.fs", "shader/geometryshader.gs");
 
     // Shader for displacement mapping
     displacementShader = new Shader();
-    displacementShader->load("displacement.vs", "displacement.fs");
+    displacementShader->load("shader/displacement.vs", "shader/displacement.fs");
+
+    // Shader for particle system
+    particleSystem.InitParticleSystem();
+    // Particle texture
+    particleSystem.mTexture = new Texture2D(loadTexture(std::filesystem::absolute("resources/particle.png").string().c_str()), GL_TEXTURE0);
+
+    // Set generator particle attributes
+    particleSystem.SetGeneratorProperties(
+        glm::vec3(-5.0f, 0.0f, 5.0f),   // Where the particles are generated
+        glm::vec3(-2, 0, -2),           // Minimum velocity
+        glm::vec3(2, 4, 2),             // Maximum velocity
+        glm::vec3(0, -1, 0),            // Gravity force applied to particles
+        glm::vec3(1.0f, 1.0f, 1.0f),    // Color
+        1.5f,                           // Minimum lifetime in seconds
+        2.0f,                           // Maximum lifetime in seconds
+        1.0f,                           // Rendered size
+        0.3f,                           // Set the update rate to 0.3
+        30);                            // And spawn 30 particles
 
     // Load textures
     diffuseMap = loadTexture(std::filesystem::absolute("resources/stone_color.jpg").string().c_str());
@@ -124,6 +144,9 @@ void renderLoop()
 
         // Handle input
         processInput(window);
+
+        // 3D Texture
+        // --------------------
 
         // Set Viewport according to 3D Texture-Size
         glViewport(0, 0, TEX_WIDTH, TEX_HEIGHT); 
@@ -219,6 +242,13 @@ void renderLoop()
 
         renderQuad();
 
+        // Particle System
+        // --------------------
+
+        particleSystem.SetMatrices(projection, view, camera.Position, camera.Front, camera.Up);
+        particleSystem.UpdateParticles(deltaTime);
+        particleSystem.RenderParticles();
+
         // Glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         keyHandler.FrameUpdate();
         glfwSwapBuffers(window);
@@ -295,6 +325,9 @@ void processInput(GLFWwindow* window)
         camera.ProcessKeyboard(Camera::Camera_Movement::DOWN, deltaTime);
     }
 
+    // 3D-Texture
+    // ----------
+
     // Generate more of the 3D texture
     if (keyHandler.IsKeyDown(GLFW_KEY_UP))
     {
@@ -304,6 +337,15 @@ void processInput(GLFWwindow* window)
     {
         height += deltaTime;
     }
+
+    // Toggle Wireframe Mode
+    if (keyHandler.WasKeyReleased(GLFW_KEY_SPACE))
+    {
+        wireframeMode = !wireframeMode;
+    }
+
+    // Displacement - Mapping
+    // ----------------------
 
     // Decrease the displacement height
     if (keyHandler.IsKeyDown(GLFW_KEY_N))
@@ -380,17 +422,40 @@ void processInput(GLFWwindow* window)
         }
     }
 
+    // Particle - System
+    // -----------------
+
+    // Decrease time it takes to spawn a new generation of particles (update rate)
+    if (keyHandler.WasKeyReleased(GLFW_KEY_G))
+    {
+        if (particleSystem.mNextGenerationTime > 0.01f)
+        {
+            particleSystem.mNextGenerationTime -= 0.02f;
+        }
+        else
+        {
+            particleSystem.mNextGenerationTime = 0.01f;
+        }
+    }
+    // Increase time it takes to spawn a new generation of particles (update rate)
+    if (keyHandler.WasKeyReleased(GLFW_KEY_H))
+    {
+        if (particleSystem.mNextGenerationTime < 1.0f)
+        {
+            particleSystem.mNextGenerationTime += 0.02f;
+        }
+        else
+        {
+            particleSystem.mNextGenerationTime = 1.0f;
+        }
+    }
+
+
     // Get Position and rotation of the camera
     if (keyHandler.WasKeyReleased(GLFW_KEY_C))
     {
         std::cout << camera.Position.x << "f, " << camera.Position.y << "f, " << camera.Position.z << "f" << std::endl;
         std::cout << camera.Rotation.w << "f, " << camera.Rotation.x << "f, " << camera.Rotation.y << "f, " << camera.Rotation.z << "f" << std::endl;
-    }
-
-    // Toggle Wireframe Mode
-    if (keyHandler.WasKeyReleased(GLFW_KEY_SPACE))
-    {
-        wireframeMode = !wireframeMode;
     }
 }
 

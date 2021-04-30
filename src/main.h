@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "KeyHandler.h"
+#include "ParticleSystem.h"
 
 int initialization();
 void setupShadersTexturesBuffers();
@@ -89,3 +90,6 @@ float height = 0;
 bool wireframeMode = false;
 
 float verticesRock[6][2] = { {-1.0f, -1.0f}, {-1.0, 1.0}, {1.0, -1.0}, {1.0f, 1.0f}, {-1.0, 1.0}, {1.0, -1.0} };
+
+// Particle System
+ParticleSystem particleSystem;
