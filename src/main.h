@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 
 #include <glBasics/shader.h>
+#include <glBasics/texture2D.h>
 #include <glBasics/camera.h>
 #include <stb_image.h>
 
@@ -15,6 +16,8 @@
 
 #include "KeyHandler.h"
 #include "ParticleSystem.h"
+#include "Ray.h"
+#include "Plane.h"
 
 int initialization();
 void setupShadersTexturesBuffers();
@@ -54,6 +57,7 @@ KeyHandler keyHandler;
 Shader* rockShader;
 Shader* shader;
 Shader* displacementShader;
+Shader* backgroundShader;
 
 // Timing
 float deltaTime = 0.0f;
@@ -93,3 +97,7 @@ float verticesRock[6][2] = { {-1.0f, -1.0f}, {-1.0, 1.0}, {1.0, -1.0}, {1.0f, 1.
 
 // Particle System
 ParticleSystem particleSystem;
+
+Ray ray;
+Plane* background;
+unsigned int backgroundTexture;

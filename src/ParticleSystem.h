@@ -21,7 +21,7 @@ public:
 	void SetGeneratorPosition(const glm::vec3& position);
 	int GetNumParticles() const;
 
-	void SetMatrices(const glm::mat4& projection, const glm::mat4& viewMat, const glm::vec3& eye, const glm::vec3& view, const glm::vec3& upVector);
+	void SetMatrices(const glm::mat4& projection, const glm::mat4& viewMat, const glm::vec3& view, const glm::vec3& upVector);
 
 	Texture2D* mTexture;
 	float mNextGenerationTime;

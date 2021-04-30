@@ -154,8 +154,11 @@
   <ItemGroup>
     <ClInclude Include="src\KeyHandler.h" />
     <ClInclude Include="src\main.h" />
+    <ClInclude Include="src\Mesh.h" />
     <ClInclude Include="src\Particle.h" />
     <ClInclude Include="src\ParticleSystem.h" />
+    <ClInclude Include="src\Plane.h" />
+    <ClInclude Include="src\Ray.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

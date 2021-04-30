@@ -78,6 +78,11 @@ void setupShadersTexturesBuffers()
     displacementShader = new Shader();
     displacementShader->load("shader/displacement.vs", "shader/displacement.fs");
 
+    // Shader for background plane
+    backgroundShader = new Shader();
+    backgroundShader->load("shader/background.vs", "shader/background.fs");
+    backgroundTexture = loadTexture(std::filesystem::absolute("resources/background.jpg").string().c_str());
+
     // Shader for particle system
     particleSystem.InitParticleSystem();
     // Particle texture
@@ -130,6 +135,14 @@ void setupShadersTexturesBuffers()
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
     glBindVertexArray(0);
+
+    // Background Plane
+    background = new Plane();
+    glm::mat4 modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(96.0f, -54.0f, 1.0f));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f, 0.5f, 1.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 50.0f));
+    background->mModelMatrix = modelMatrix;
 }
 
 void renderLoop()
@@ -245,7 +258,17 @@ void renderLoop()
         // Particle System
         // --------------------
 
-        particleSystem.SetMatrices(projection, view, camera.Position, camera.Front, camera.Up);
+        // Render background
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, backgroundTexture);
+        backgroundShader->use();
+        backgroundShader->setMat4("projection", projection);
+        backgroundShader->setMat4("view", view);
+        backgroundShader->setMat4("model", background->mModelMatrix);
+        background->Draw();
+
+        // Update & Render particles
+        particleSystem.SetMatrices(projection, view, camera.Front, camera.Up);
         particleSystem.UpdateParticles(deltaTime);
         particleSystem.RenderParticles();
 
@@ -269,6 +292,7 @@ void onExit()
     delete shader;
     delete rockShader;
     delete displacementShader;
+    delete backgroundShader;
 }
 
 // Handle Key input
@@ -447,6 +471,20 @@ void processInput(GLFWwindow* window)
         else
         {
             particleSystem.mNextGenerationTime = 1.0f;
+        }
+    }
+
+    // Shoot Ray
+    if (keyHandler.WasKeyReleased(GLFW_KEY_R))
+    {
+        ray = Ray(camera.Position, camera.Front);
+        ray.UpdateLine();
+        // Check if the ray intersects the background
+        if (background->Intersects(ray, ray.mHitDistance))
+        {
+            glm::vec3 hitPos = ray.mOrigin + ray.mDirection * ray.mHitDistance;
+            ray.UpdateLine();
+            particleSystem.SetGeneratorPosition(hitPos);
         }
     }
 

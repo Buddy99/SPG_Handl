@@ -186,7 +186,7 @@ void ParticleSystem::RenderParticles()
 	// Render Particles
 	renderShader->use();
 	mTexture->use();
-	renderShader->setMat4("proj", mProjection);
+	renderShader->setMat4("projection", mProjection);
 	renderShader->setMat4("view", mView);
 	renderShader->setVec3("quad1", mQuad1);
 	renderShader->setVec3("quad2", mQuad2);
@@ -230,19 +230,19 @@ int ParticleSystem::GetNumParticles() const
 	return mNumParticles;
 }
 
-void ParticleSystem::SetMatrices(const glm::mat4& projection, const glm::mat4& viewMat, const glm::vec3& eye, const glm::vec3& view, const glm::vec3& upVector)
+void ParticleSystem::SetMatrices(const glm::mat4& projection, const glm::mat4& viewMat, const glm::vec3& view, const glm::vec3& upVector)
 {
 	// Set matrices and quad for billboarding
 	mProjection = projection;
 	mView = viewMat;
 
-	glm::vec3 nView = view - eye;
-	nView = glm::normalize(nView);
+	//glm::vec3 nView = view - eye;
+	//nView = glm::normalize(nView);
 
 	// Calculate the billboarded plane vectors
-	mQuad1 = glm::cross(nView, upVector);
+	mQuad1 = glm::cross(view, upVector);
 	mQuad1 = glm::normalize(mQuad1);
-	mQuad2 = glm::cross(nView, mQuad1);
+	mQuad2 = glm::cross(view, mQuad1);
 	mQuad2 = glm::normalize(mQuad2);
 }
 

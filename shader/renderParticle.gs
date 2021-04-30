@@ -1,6 +1,6 @@
 #version 430
 
-uniform mat4 proj;
+uniform mat4 projection;
 uniform mat4 view;
 
 uniform vec3 quad1, quad2;
@@ -22,7 +22,7 @@ void main()
     // Create quads from a point
     vec3 posOld = gl_in[0].gl_Position.xyz;
     float size = sizePass[0];
-    mat4 vp = proj * view;
+    mat4 vp = projection * view;
     
     colorPart = vec4(colorPass[0], lifeTimePass[0]);
        

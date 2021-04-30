@@ -91,20 +91,21 @@ void main()
   }
   else if(lifeTimeOut > 0.0) // If it's a normal particle, that still has lifetime remaining
   {
-      if(lifeTimeOut < 0.5)
-      {
-        colorOut.x = 0;
-        colorOut.y = 1;
-        colorOut.z = 1;
-      }
-      else if(lifeTimeOut < 1.0)
-      {
-        colorOut.x = 1;
-        colorOut.y = 0;
-        colorOut.z = 1;
-      }
-      // Emit Particle
-      EmitVertex();
-      EndPrimitive(); 
+    // Change the color of the particles depending on the remaining lifetime
+    if(lifeTimeOut < 0.5)
+    {
+      colorOut.x = 0;
+      colorOut.y = 1;
+      colorOut.z = 1;
+    }
+    else if(lifeTimeOut < 1.0)
+    {
+      colorOut.x = 1;
+      colorOut.y = 0;
+      colorOut.z = 1;
+    }
+    // Emit Particle
+    EmitVertex();
+    EndPrimitive(); 
   }
 }
