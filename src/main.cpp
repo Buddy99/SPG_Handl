@@ -464,25 +464,25 @@ void processInput(GLFWwindow* window)
     // Decrease time it takes to spawn a new generation of particles (update rate)
     if (keyHandler.WasKeyReleased(GLFW_KEY_G))
     {
-        if (particleSystem.mNextGenerationTime > 0.01f)
+        if (particleSystem.mUpdateRate > 0.01f)
         {
-            particleSystem.mNextGenerationTime -= 0.02f;
+            particleSystem.mUpdateRate -= 0.02f;
         }
         else
         {
-            particleSystem.mNextGenerationTime = 0.01f;
+            particleSystem.mUpdateRate = 0.01f;
         }
     }
     // Increase time it takes to spawn a new generation of particles (update rate)
     if (keyHandler.WasKeyReleased(GLFW_KEY_H))
     {
-        if (particleSystem.mNextGenerationTime < 1.0f)
+        if (particleSystem.mUpdateRate < 1.0f)
         {
-            particleSystem.mNextGenerationTime += 0.02f;
+            particleSystem.mUpdateRate += 0.02f;
         }
         else
         {
-            particleSystem.mNextGenerationTime = 1.0f;
+            particleSystem.mUpdateRate = 1.0f;
         }
     }
 

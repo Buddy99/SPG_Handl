@@ -128,11 +128,11 @@ void ParticleSystem::UpdateParticles(float timeStep)
 
 	mElapsedTime += timeStep;
 
-	if (mElapsedTime > mNextGenerationTime)
+	if (mElapsedTime > mUpdateRate)
 	{
 		// Produce a new particle generation
 		updateShader->setInt("numToGenerate", mNumToGenerate);
-		mElapsedTime -= mNextGenerationTime;
+		mElapsedTime -= mUpdateRate;
 
 		glm::vec3 randomSeed = glm::vec3(grandf(-10.0f, 20.0f), grandf(-10.0f, 20.0f), grandf(-10.0f, 20.0f));
 		updateShader->setVec3("randomSeed", randomSeed);
@@ -214,7 +214,7 @@ void ParticleSystem::SetGeneratorProperties(const glm::vec3& position, const glm
 	mLifeTimeMin = minLifeTime;					// Minimum lifetime in seconds
 	mLifeTimeRange = maxLifeTime - minLifeTime;	// Maximum lifetime in seconds
 
-	mNextGenerationTime = every;				// When should the next particlle generation be spawned
+	mUpdateRate = every;				// When should the next particlle generation be spawned
 	mElapsedTime = 0.8f;						// Set Elapsed time so that some particles are spawned instantly 
 
 	mNumToGenerate = numToGenerate;				// How many particles should be spawned
@@ -235,9 +235,6 @@ void ParticleSystem::SetMatrices(const glm::mat4& projection, const glm::mat4& v
 	// Set matrices and quad for billboarding
 	mProjection = projection;
 	mView = viewMat;
-
-	//glm::vec3 nView = view - eye;
-	//nView = glm::normalize(nView);
 
 	// Calculate the billboarded plane vectors
 	mQuad1 = glm::cross(view, upVector);
