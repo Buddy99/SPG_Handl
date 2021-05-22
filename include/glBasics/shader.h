@@ -225,7 +225,7 @@ private:
     GLint GetLocation(const std::string& name) const
     {
         GLint location = glGetUniformLocation(ID, name.c_str());
-        assert(location != -1);
+        //assert(location != -1);
         return location;
     }
 };

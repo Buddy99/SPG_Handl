@@ -15,10 +15,14 @@ public:
 
     ~Texture()
     {
-        glDeleteTextures(1, &mTex);
+        if (mTex != 0)
+        {
+            glDeleteTextures(1, &mTex);
+            mTex = 0;
+        }
     }
 
-    virtual void use() = 0;
+    virtual void use(unsigned int overrideLocation = GL_TEXTURE) = 0;
 
     unsigned int mTex;
     unsigned int mTexLocation;

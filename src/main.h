@@ -21,7 +21,9 @@
 
 int initialization();
 void setupShadersTexturesBuffers();
+void updateScene();
 void renderLoop();
+void renderScene();
 void onExit();
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -30,22 +32,33 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 void handleKey(GLFWwindow* window, int key, int scancode, int action, int mods);
 unsigned int loadTexture(char const* path);
-void renderQuad();
 void printError();
 
 // Settings
 const unsigned int SCR_WIDTH = 1024;
 const unsigned int SCR_HEIGHT = 768;
 
+const unsigned int SHADOW_WIDTH = 2048;
+const unsigned int SHADOW_HEIGHT = 2048;
+
+const float LIGHT_NEAR_PLANE = 0.5f;
+const float LIGHT_FAR_PLANE = 100.0f;
+
+unsigned int CAMERA_WIDTH = 0;
+unsigned int CAMERA_HEIGHT = 0;
+
 // Camera
 // Camera camera(glm::vec3(20.0f, 18.0f, -10.0f));
-Camera camera(glm::vec3(0.0f, 0.25f, -3.5f));
+//Camera camera(glm::vec3(0.0f, 0.25f, -3.5f));
+Camera camera;
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
 
 // Light
-glm::vec3 lightPos(30.0f, 20.0f, -20.0f);
+//glm::vec3 lightPos(30.0f, 20.0f, -20.0f);
+glm::vec3 lightPos;
+glm::vec3 lightDir;
 
 // Window
 GLFWwindow* window;
@@ -58,6 +71,8 @@ Shader* rockShader;
 Shader* shader;
 Shader* displacementShader;
 Shader* backgroundShader;
+Shader* floorShader;
+Shader* filterShader;
 
 // Timing
 float deltaTime = 0.0f;
@@ -101,5 +116,21 @@ float verticesRock[6][2] = { {-1.0f, -1.0f}, {-1.0, 1.0}, {1.0, -1.0}, {1.0f, 1.
 ParticleSystem particleSystem;
 
 Ray ray;
+
+// Planes
 Plane* background;
 unsigned int backgroundTexture;
+Plane* shadowReceiver;
+unsigned int floorTexture;
+Plane* firstObject;
+Plane* secondObject;
+Plane* thirdObject;
+Plane* filterPlane;
+
+// Shadows
+unsigned int depthMapFbo;
+unsigned int depthMapFilterFbo;
+Texture2D* depthMap;
+Texture2D* tempDepthMap;
+
+float shadowPass;

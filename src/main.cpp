@@ -52,12 +52,16 @@ int initialization()
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_MULTISAMPLE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_CULL_FACE);
 
     // Camera
-    // camera.UpdateRotation({ 0.87f, -0.0f, -0.03f, 0.47f });
+    //camera.UpdateRotation({ 0.87f, -0.0f, -0.03f, 0.47f });
+    camera.Position = glm::vec3(-5.0f, 15.0f, -30.0f);
     camera.Yaw = 90.0f;
-    camera.Pitch = -1.5f;
+    camera.Pitch = -18.0f;
     camera.updateCameraVectors();
+    lightPos = glm::vec3(0.0f, 30.0f, -30.0f);
+    lightDir = glm::vec3(0.0f, 0.0f, 0.0f) - lightPos;
 
     return 0;
 }
@@ -79,9 +83,16 @@ void setupShadersTexturesBuffers()
     displacementShader->load("shader/displacement.vs", "shader/displacement.fs");
 
     // Shader for background plane
-    backgroundShader = new Shader();
-    backgroundShader->load("shader/background.vs", "shader/background.fs");
-    backgroundTexture = loadTexture(std::filesystem::absolute("resources/background.jpg").string().c_str());
+    //backgroundShader = new Shader();
+    //backgroundShader->load("shader/shadow.vs", "shader/shadow.fs");
+
+    // Shader for floor plane
+    floorShader = new Shader();
+    floorShader->load("shader/shadow.vs", "shader/shadow.fs");
+
+    // Shader for VSM
+    filterShader = new Shader();
+    filterShader->load("shader/blur.vs", "shader/blur.fs");
 
     // Shader for particle system
     particleSystem.InitParticleSystem();
@@ -105,6 +116,8 @@ void setupShadersTexturesBuffers()
     diffuseMap = loadTexture(std::filesystem::absolute("resources/stone_color.jpg").string().c_str());
     normalMap = loadTexture(std::filesystem::absolute("resources/stone_normal.jpg").string().c_str());
     heightMap = loadTexture(std::filesystem::absolute("resources/stone_displacement.jpg").string().c_str());
+    //backgroundTexture = loadTexture(std::filesystem::absolute("resources/background.jpg").string().c_str());
+    floorTexture = loadTexture(std::filesystem::absolute("resources/grass.jpg").string().c_str());
 
     // 3D texture
     glGenTextures(1, &tex3D);
@@ -136,6 +149,40 @@ void setupShadersTexturesBuffers()
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), 0);
     glBindVertexArray(0);
 
+    // Shadow Map
+    depthMap = new Texture2D(0, GL_TEXTURE1);
+    glGenTextures(1, &depthMap->mTex);
+    depthMap->mShared = true;
+    glBindTexture(GL_TEXTURE_2D, depthMap->mTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 1.0, 1.0, 1.0, 1.0 };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    tempDepthMap = new Texture2D(0, GL_TEXTURE0);
+    glGenTextures(1, &tempDepthMap->mTex);
+    tempDepthMap->mShared = true;
+    glBindTexture(GL_TEXTURE_2D, tempDepthMap->mTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+
+    glGenFramebuffers(1, &depthMapFbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, tempDepthMap->mTex, 0);
+
+    glGenFramebuffers(1, &depthMapFilterFbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFilterFbo);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, depthMap->mTex, 0);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     // Plane for displacement mapping
     wall = new Plane();
     glm::mat4 modelMatrix = glm::mat4(1.0f);
@@ -145,12 +192,46 @@ void setupShadersTexturesBuffers()
     wall->mModelMatrix = modelMatrix;
 
     // Background Plane
-    background = new Plane();
+    //background = new Plane();
+    //modelMatrix = glm::mat4(1.0f);
+    //modelMatrix = glm::rotate(modelMatrix, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+    //modelMatrix = glm::scale(modelMatrix, glm::vec3(96.0f, -60.0f, 1.0f));
+    //modelMatrix = glm::scale(modelMatrix, glm::vec3(0.3f, 0.3f, 1.0f));
+    //modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.5f, 25.0f));
+    //modelMatrix = glm::rotate(modelMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    //background->mModelMatrix = modelMatrix;
+
+    // Floor Plane
+    shadowReceiver = new Plane();
     modelMatrix = glm::mat4(1.0f);
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(96.0f, -54.0f, 1.0f));
-    modelMatrix = glm::scale(modelMatrix, glm::vec3(0.5f, 0.5f, 1.0f));
-    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, 50.0f));
-    background->mModelMatrix = modelMatrix;
+    modelMatrix = glm::rotate(modelMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(25.0f, 25.0f, 1.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.0f, -5.0f));
+    shadowReceiver->mModelMatrix = modelMatrix;
+
+    // Objects 
+    firstObject = new Plane();
+    modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::rotate(modelMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.5f, 1.5f, 1.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(-1.0f, 7.0f, 2.0f));
+    firstObject->mModelMatrix = modelMatrix;
+
+    secondObject = new Plane();
+    modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::rotate(modelMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(2.0f, 2.0f, 1.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 5.0f, 0.0f));
+    secondObject->mModelMatrix = modelMatrix;
+
+    thirdObject = new Plane();
+    modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::rotate(modelMatrix, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(1.0f, 1.0f, 1.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(6.0f, 9.0f, -2.0f));
+    thirdObject->mModelMatrix = modelMatrix;
+
+    filterPlane = new Plane();
 }
 
 void renderLoop()
@@ -163,122 +244,39 @@ void renderLoop()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // Handle input
-        processInput(window);
-
-        // 3D Texture
-        // --------------------
-
-        // Set Viewport according to 3D Texture-Size
-        glViewport(0, 0, TEX_WIDTH, TEX_HEIGHT); 
-
-        // Use the rock Shader to generate the 3D texture on the GPU
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-        glClear(GL_COLOR_BUFFER_BIT);
-        rockShader->use();
-        rockShader->setFloat("height", height);
-
-        for (int i = 0; i < TEX_DEPTH; i++)
-        {
-            // Set layer (depending on texture depth)
-            rockShader->setFloat("layer", float(i) / float(TEX_DEPTH - 1.0f));
-
-            // Attach the texture to currently bound framebuffer object
-            glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
-            glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, tex3D, 0, i);
-
-            if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-            {
-                std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
-            }
-
-            glBindVertexArray(VAORock);
-            glDrawArrays(GL_TRIANGLES, 0, 6);
-        }
-
-        // Set viewport
-        glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Generate Triangles using Marching Cubes Algorithm on GPU
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
-        shader->use();
-        shader->setMat4("proj", projection);
-        shader->setMat4("view", view);
-        shader->setMat4("model", model);
-        shader->setInt("texWidth", TEX_WIDTH);
-        shader->setInt("texHeight", TEX_HEIGHT);
-        shader->setInt("texDepth", TEX_DEPTH);
+        // Handle input
+        processInput(window);
 
-        // Draw in Wireframe-Mode if Space is pressed
-        if (wireframeMode)
-        {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        }
+        // Update
+        updateScene();
 
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_3D, tex3D);
-        //glPointSize(5.0f);
-        glBindVertexArray(VAORock);      
-        glDrawArrays(GL_POINTS, 0, TEX_WIDTH * TEX_HEIGHT * TEX_DEPTH);   // draw points 
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        // Render scene from lights view (for shadow mapping)
+        shadowPass = 1;
+        CAMERA_WIDTH = SHADOW_WIDTH;
+        CAMERA_HEIGHT = SHADOW_HEIGHT;
+        glViewport(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFbo);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        renderScene();
 
-        // Displacement Mapping
-        // --------------------
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFilterFbo);
+        glClear(GL_COLOR_BUFFER_BIT);
+        filterShader->use();
+        filterShader->setFloat("blurAmount", 4);
+        tempDepthMap->use();
+        filterPlane->Draw();
 
-        // Configure view/projection matrices
-        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        view = camera.GetViewMatrix();
-        displacementShader->use();
-        displacementShader->setMat4("projection", projection);
-        displacementShader->setMat4("view", view);
-
-        // Render displacement-mapped quad
-        model = glm::mat4(1.0f);
-        model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-        displacementShader->setMat4("model", model);
-        displacementShader->setVec3("viewPos", camera.Position);
-        displacementShader->setVec3("lightPos", lightPos);
-        displacementShader->setFloat("heightScale", heightScale);           // Adjust with M and N keys
-        displacementShader->setFloat("steps", steps);                       // Adjust with K and J keys
-        displacementShader->setFloat("refinementSteps", refinementSteps);   // Adjust with O and I keys
-
-        //std::cout << heightScale << std::endl;
-        //std::cout << steps << std::endl;
-        //std::cout << refinementSteps << std::endl;
-
-        // Bind textures
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, diffuseMap);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, normalMap);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, heightMap);
-
-        wall->Draw();
-
-        // Particle System
-        // --------------------
-
-        // Render background
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, backgroundTexture);
-        backgroundShader->use();
-        backgroundShader->setMat4("projection", projection);
-        backgroundShader->setMat4("view", view);
-        backgroundShader->setMat4("model", background->mModelMatrix);
-        background->Draw();
-
-        // Update & Render particles
-        particleSystem.SetMatrices(projection, view, camera.Front, camera.Up);
-        particleSystem.UpdateParticles(deltaTime);
-        particleSystem.RenderParticles();
+        // Render scene from cameras view
+        shadowPass = 0;
+        CAMERA_WIDTH = SCR_WIDTH;
+        CAMERA_HEIGHT = SCR_HEIGHT;
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glViewport(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        renderScene();
 
         // Glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         keyHandler.FrameUpdate();
@@ -290,21 +288,203 @@ void renderLoop()
     }
 }
 
+void updateScene()
+{
+    // Update 3D Texture
+
+    // Set Viewport according to 3D Texture-Size
+    glViewport(0, 0, TEX_WIDTH, TEX_HEIGHT);
+
+    // Use the rock Shader to generate the 3D texture on the GPU
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+    glClear(GL_COLOR_BUFFER_BIT);
+    rockShader->use();
+    rockShader->setFloat("height", height);
+
+    for (int i = 0; i < TEX_DEPTH; i++)
+    {
+        // Set layer (depending on texture depth)
+        rockShader->setFloat("layer", float(i) / float(TEX_DEPTH - 1.0f));
+
+        // Attach the texture to currently bound framebuffer object
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        glFramebufferTexture3D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_3D, tex3D, 0, i);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+        }
+
+        glBindVertexArray(VAORock);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
+    }
+
+    // Set viewport
+    glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    // Update particles
+    particleSystem.UpdateParticles(deltaTime);
+}
+
+void renderScene()
+{
+    // Matrices
+    glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 200.0f);
+    glm::mat4 view = camera.GetViewMatrix();
+
+    // Light 
+    glm::mat4 lightProjection;
+    glm::mat4 lightView;
+    glm::mat4 lightSpaceMatrix;
+    lightProjection = glm::ortho(-50.0f, 50.0f, -50.0f, 50.0f, LIGHT_NEAR_PLANE, LIGHT_FAR_PLANE);
+    lightView = glm::lookAt(lightPos, lightDir + lightPos, glm::vec3(0.0, 1.0, 0.0));
+    lightSpaceMatrix = lightProjection * lightView;
+
+    // 3D Texture
+    // --------------------
+
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Generate Triangles using Marching Cubes Algorithm on GPU
+    glm::mat4 model = glm::mat4(1.0f);
+    model = glm::scale(model, glm::vec3(0.1f, 0.1f, 0.1f));
+    shader->use();
+    shader->setMat4("proj", projection);
+    shader->setMat4("view", view);
+    shader->setMat4("model", model);
+    shader->setInt("texWidth", TEX_WIDTH);
+    shader->setInt("texHeight", TEX_HEIGHT);
+    shader->setInt("texDepth", TEX_DEPTH);
+
+    // Draw in Wireframe-Mode if Space is pressed
+    if (wireframeMode)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_3D, tex3D);
+    //glPointSize(5.0f);
+    glBindVertexArray(VAORock);
+    glDrawArrays(GL_POINTS, 0, TEX_WIDTH * TEX_HEIGHT * TEX_DEPTH);   // draw points 
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    // Displacement Mapping
+    // --------------------
+
+    // Configure view/projection matrices
+    displacementShader->use();
+    displacementShader->setMat4("projection", projection);
+    displacementShader->setMat4("view", view);
+
+    // Render displacement-mapped quad
+    model = glm::mat4(1.0f);
+    model = glm::rotate(model, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    displacementShader->setMat4("model", model);
+    displacementShader->setVec3("viewPos", camera.Position);
+    displacementShader->setVec3("lightPos", lightPos);
+    displacementShader->setFloat("heightScale", heightScale);           // Adjust with M and N keys
+    displacementShader->setFloat("steps", steps);                       // Adjust with K and J keys
+    displacementShader->setFloat("refinementSteps", refinementSteps);   // Adjust with O and I keys
+
+    //std::cout << heightScale << std::endl;
+    //std::cout << steps << std::endl;
+    //std::cout << refinementSteps << std::endl;
+
+    // Bind textures
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, diffuseMap);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, normalMap);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, heightMap);
+
+    wall->Draw();
+
+    // Shadows
+    // ------------------
+
+    // Render floor
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, floorTexture);
+    depthMap->use();
+    floorShader->use();
+    floorShader->setVec4("uColor", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    floorShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+    floorShader->setVec3("lightPos", lightPos);
+    floorShader->setVec3("viewPos", camera.Position);
+    floorShader->setFloat("shadowPass", shadowPass);
+    floorShader->setMat4("projection", projection);
+    floorShader->setMat4("view", view);
+    floorShader->setMat4("model", shadowReceiver->mModelMatrix);
+    shadowReceiver->Draw();
+
+    // Render objects
+    floorShader->setVec4("uColor", glm::vec4(1.0f, 0.0f, 0.0f, 1.0f));
+    floorShader->setMat4("model", firstObject->mModelMatrix);
+    firstObject->Draw();
+
+    floorShader->setVec4("uColor", glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+    floorShader->setMat4("model", secondObject->mModelMatrix);
+    secondObject->Draw();
+
+    floorShader->setVec4("uColor", glm::vec4(0.0f, 0.0f, 1.0f, 1.0f));
+    floorShader->setMat4("model", thirdObject->mModelMatrix);
+    thirdObject->Draw();
+
+    // Render background
+    //glActiveTexture(GL_TEXTURE0);
+    //glBindTexture(GL_TEXTURE_2D, backgroundTexture);
+    //depthMap->use();
+    //backgroundShader->use();
+    //backgroundShader->setVec4("uColor", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    //backgroundShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
+    //backgroundShader->setVec3("lightPos", lightPos);
+    //backgroundShader->setVec3("viewPos", camera.Position);
+    //backgroundShader->setFloat("shadowPass", shadowPass);
+    //backgroundShader->setMat4("projection", projection);
+    //backgroundShader->setMat4("view", view);
+    //backgroundShader->setMat4("model", background->mModelMatrix);
+    //background->Draw();
+
+    // Particle System
+    // --------------------
+
+    // Render particles
+    particleSystem.SetMatrices(projection, view, camera.Front, camera.Up);
+    particleSystem.RenderParticles();
+}
+
 void onExit()
 {
     // De-allocation of resources
     glDeleteVertexArrays(1, &VAORock);
     glDeleteBuffers(1, &VBORock);
+    glDeleteFramebuffers(1, &depthMapFbo);
+    glDeleteFramebuffers(1, &depthMapFilterFbo);
 
     // Delete shaders
     delete shader;
     delete rockShader;
     delete displacementShader;
-    delete backgroundShader;
+    //delete backgroundShader;
+    delete floorShader;
+    delete filterShader;
 
     // Delete planes
-    delete background;
+    //delete background;
     delete wall;
+    delete shadowReceiver;
+    delete firstObject;
+    delete secondObject;
+    delete thirdObject;
+    delete filterPlane;
+
+    // Delete textures
+    delete depthMap;
+    delete tempDepthMap;
 }
 
 // Handle Key input
@@ -492,7 +672,7 @@ void processInput(GLFWwindow* window)
         ray = Ray(camera.Position, camera.Front);
         ray.UpdateLine();
         // Check if the ray intersects the background
-        if (background->Intersects(ray, ray.mHitDistance))
+        if (shadowReceiver->Intersects(ray, ray.mHitDistance))
         {
             glm::vec3 hitPos = ray.mOrigin + ray.mDirection * ray.mHitDistance;
             ray.UpdateLine();

@@ -17,9 +17,16 @@ public:
     {
     }
 
-    void use() override
+    void use(unsigned int overrideLocation = GL_TEXTURE) override
     {
-        glActiveTexture(mTexLocation);
+        if (overrideLocation == GL_TEXTURE)
+        {
+            glActiveTexture(mTexLocation);
+        }
+        else
+        {
+            glActiveTexture(overrideLocation);
+        }
         glBindTexture(GL_TEXTURE_2D, mTex);
     }
 };
