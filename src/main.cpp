@@ -82,15 +82,11 @@ void setupShadersTexturesBuffers()
     displacementShader = new Shader();
     displacementShader->load("shader/displacement.vs", "shader/displacement.fs");
 
-    // Shader for background plane
-    //backgroundShader = new Shader();
-    //backgroundShader->load("shader/shadow.vs", "shader/shadow.fs");
-
-    // Shader for floor plane
+    // Shader for shadows
     floorShader = new Shader();
     floorShader->load("shader/shadow.vs", "shader/shadow.fs");
 
-    // Shader for VSM
+    // Shader for blurring
     filterShader = new Shader();
     filterShader->load("shader/blur.vs", "shader/blur.fs");
 
@@ -116,7 +112,6 @@ void setupShadersTexturesBuffers()
     diffuseMap = loadTexture(std::filesystem::absolute("resources/stone_color.jpg").string().c_str());
     normalMap = loadTexture(std::filesystem::absolute("resources/stone_normal.jpg").string().c_str());
     heightMap = loadTexture(std::filesystem::absolute("resources/stone_displacement.jpg").string().c_str());
-    //backgroundTexture = loadTexture(std::filesystem::absolute("resources/background.jpg").string().c_str());
     floorTexture = loadTexture(std::filesystem::absolute("resources/grass.jpg").string().c_str());
 
     // 3D texture
@@ -190,16 +185,6 @@ void setupShadersTexturesBuffers()
     modelMatrix = glm::scale(modelMatrix, glm::vec3(3.0f, 3.0f, 3.0f));
     modelMatrix = glm::translate(modelMatrix, glm::vec3(-2.0f, 0.0f, 5.0f));
     wall->mModelMatrix = modelMatrix;
-
-    // Background Plane
-    //background = new Plane();
-    //modelMatrix = glm::mat4(1.0f);
-    //modelMatrix = glm::rotate(modelMatrix, glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-    //modelMatrix = glm::scale(modelMatrix, glm::vec3(96.0f, -60.0f, 1.0f));
-    //modelMatrix = glm::scale(modelMatrix, glm::vec3(0.3f, 0.3f, 1.0f));
-    //modelMatrix = glm::translate(modelMatrix, glm::vec3(0.0f, 0.5f, 25.0f));
-    //modelMatrix = glm::rotate(modelMatrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    //background->mModelMatrix = modelMatrix;
 
     // Floor Plane
     shadowReceiver = new Plane();
@@ -435,21 +420,6 @@ void renderScene()
     floorShader->setMat4("model", thirdObject->mModelMatrix);
     thirdObject->Draw();
 
-    // Render background
-    //glActiveTexture(GL_TEXTURE0);
-    //glBindTexture(GL_TEXTURE_2D, backgroundTexture);
-    //depthMap->use();
-    //backgroundShader->use();
-    //backgroundShader->setVec4("uColor", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    //backgroundShader->setMat4("lightSpaceMatrix", lightSpaceMatrix);
-    //backgroundShader->setVec3("lightPos", lightPos);
-    //backgroundShader->setVec3("viewPos", camera.Position);
-    //backgroundShader->setFloat("shadowPass", shadowPass);
-    //backgroundShader->setMat4("projection", projection);
-    //backgroundShader->setMat4("view", view);
-    //backgroundShader->setMat4("model", background->mModelMatrix);
-    //background->Draw();
-
     // Particle System
     // --------------------
 
@@ -470,12 +440,10 @@ void onExit()
     delete shader;
     delete rockShader;
     delete displacementShader;
-    //delete backgroundShader;
     delete floorShader;
     delete filterShader;
 
     // Delete planes
-    //delete background;
     delete wall;
     delete shadowReceiver;
     delete firstObject;

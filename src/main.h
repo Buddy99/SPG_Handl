@@ -48,15 +48,12 @@ unsigned int CAMERA_WIDTH = 0;
 unsigned int CAMERA_HEIGHT = 0;
 
 // Camera
-// Camera camera(glm::vec3(20.0f, 18.0f, -10.0f));
-//Camera camera(glm::vec3(0.0f, 0.25f, -3.5f));
 Camera camera;
 float lastX = (float)SCR_WIDTH / 2.0;
 float lastY = (float)SCR_HEIGHT / 2.0;
 bool firstMouse = true;
 
 // Light
-//glm::vec3 lightPos(30.0f, 20.0f, -20.0f);
 glm::vec3 lightPos;
 glm::vec3 lightDir;
 
@@ -70,7 +67,6 @@ KeyHandler keyHandler;
 Shader* rockShader;
 Shader* shader;
 Shader* displacementShader;
-Shader* backgroundShader;
 Shader* floorShader;
 Shader* filterShader;
 
@@ -118,8 +114,6 @@ ParticleSystem particleSystem;
 Ray ray;
 
 // Planes
-Plane* background;
-unsigned int backgroundTexture;
 Plane* shadowReceiver;
 unsigned int floorTexture;
 Plane* firstObject;
