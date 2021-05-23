@@ -217,6 +217,12 @@ void setupShadersTexturesBuffers()
     thirdObject->mModelMatrix = modelMatrix;
 
     filterPlane = new Plane();
+
+    // Setup Text Renderer
+    textRenderer.LoadShader("shader/text.vs", "shader/text.fs");
+    glm::mat4 projection = glm::ortho(0.0f, static_cast<float>(SCR_WIDTH), 0.0f, static_cast<float>(SCR_HEIGHT));
+    textRenderer.SetProjection(projection, "projection");
+    textRenderer.SetupFreetype(std::filesystem::absolute("resources/Consolas.ttf").string());
 }
 
 void renderLoop()
@@ -263,6 +269,9 @@ void renderLoop()
         glViewport(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         renderScene();
+
+        // Show FPS
+        displayFPS();
 
         // Glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         keyHandler.FrameUpdate();
@@ -454,6 +463,31 @@ void onExit()
     // Delete textures
     delete depthMap;
     delete tempDepthMap;
+}
+
+void displayFPS()
+{
+    glEnable(GL_BLEND);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+    std::string text;
+
+    if (frameTime >= 0.5)
+    {
+        fps = static_cast<int>(frameCount / frameTime);
+        frameTime = 0;
+        frameCount = 0;
+    }
+    frameTime += deltaTime;
+    frameCount++;
+
+    text = "FPS:" + std::to_string(fps);
+    textRenderer.RenderText(text, SCR_WIDTH - 80.0f, SCR_HEIGHT - 20.0f, 0.4f, glm::vec3(1.0f, 1.0f, 1.0f));
+
+    text = "+";
+    textRenderer.RenderText(text, SCR_WIDTH / 2.0f, SCR_HEIGHT / 2.0f, 0.5f, glm::vec3(1.0f, 1.0f, 1.0f));
+
+    glDisable(GL_BLEND);
 }
 
 // Handle Key input

@@ -8,6 +8,7 @@
 #include <glBasics/shader.h>
 #include <glBasics/texture2D.h>
 #include <glBasics/camera.h>
+#include <glBasics/textRenderer.h>
 #include <stb_image.h>
 
 #include <iostream>
@@ -24,6 +25,7 @@ void setupShadersTexturesBuffers();
 void updateScene();
 void renderLoop();
 void renderScene();
+void displayFPS();
 void onExit();
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -63,6 +65,9 @@ GLFWwindow* window;
 // KeyHandler
 KeyHandler keyHandler;
 
+// Text Renderer
+TextRenderer textRenderer;
+
 // Shader
 Shader* rockShader;
 Shader* shader;
@@ -74,6 +79,10 @@ Shader* filterShader;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 float currentFrame;
+
+int fps = 0;
+int frameCount = 0;
+double frameTime = 0.0f;
 
 // VBOs, VAOs and EBOs
 unsigned int VBORock, VAORock;
