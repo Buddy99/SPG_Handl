@@ -262,6 +262,7 @@ void renderLoop()
         glClear(GL_DEPTH_BUFFER_BIT);
         renderScene();
 
+        // Filter the ShadowMap to blur the shadow edges
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFilterFbo);
         glClear(GL_COLOR_BUFFER_BIT);
         filterShader->use();

@@ -12,6 +12,7 @@ float HandleShadowPass(mat4 model, vec3 pos)
 {
     if(shadowPass == 1.0)
     {
+        // Set Position
         gl_Position = lightSpaceMatrix * model * vec4(pos, 1.0);
         return 1.0;
     }
