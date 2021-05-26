@@ -94,10 +94,20 @@ public:
     {
     }
 
-    void Draw()
+    void Draw(bool wireframeMode = false)
     {
         glBindVertexArray(mVao);
-        glDrawArrays(GL_TRIANGLES, 0, 6);
+
+        if (wireframeMode)
+        {
+            glPatchParameteri(GL_PATCH_VERTICES, 3);
+            glDrawArrays(GL_PATCHES, 0, 6);
+        }
+        else
+        {
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+        }
+        
         glBindVertexArray(0);
     }
 

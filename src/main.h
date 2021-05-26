@@ -74,6 +74,7 @@ Shader* shader;
 Shader* displacementShader;
 Shader* floorShader;
 Shader* filterShader;
+Shader* tessellationShader;
 
 // Timing
 float deltaTime = 0.0f;
@@ -103,8 +104,6 @@ unsigned int diffuseMap;
 unsigned int normalMap;
 unsigned int heightMap;
 
-Plane* wall;
-
 float heightScale = 0.1f;
 
 // Steps & Refinement Steps
@@ -123,12 +122,18 @@ ParticleSystem particleSystem;
 Ray ray;
 
 // Planes
+Plane* wall;
 Plane* shadowReceiver;
 unsigned int floorTexture;
 Plane* firstObject;
 Plane* secondObject;
 Plane* thirdObject;
 Plane* filterPlane;
+
+// Tessellation
+Plane* tessellationPlane;
+float tessellationFactor = 1.0f;
+unsigned int tessellationTexture;
 
 // Shadows
 unsigned int depthMapFbo;

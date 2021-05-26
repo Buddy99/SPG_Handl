@@ -55,7 +55,7 @@ bool ParticleSystem::InitParticleSystem()
 
 	// Load shader
 	updateShader = new Shader();
-	updateShader->load("shader/updateParticle.vs", nullptr, "shader/updateParticle.gs", false);
+	updateShader->load("shader/updateParticle.vs", nullptr, "shader/updateParticle.gs", nullptr, nullptr, false);
 	renderShader = new Shader();
 	renderShader->load("shader/renderParticle.vs", "shader/renderParticle.fs", "shader/renderParticle.gs");
 

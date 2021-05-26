@@ -20,47 +20,48 @@ public:
     }
 
     // Load Shader and compile
-    bool load(const char* vertexPath = nullptr, const char* fragmentPath = nullptr, const char* geometryPath = nullptr, bool link = true)
+    bool load(const char* vertexPath = nullptr, const char* fragmentPath = nullptr, const char* geometryPath = nullptr, const char* tessControlPath = nullptr, const char* tessEvalPath = nullptr, bool link = true)
     {
         // 1. retrieve the vertex/fragment source code from filePath
         std::string vertexCode;
         std::string fragmentCode;
         std::string geometryCode;
-        std::ifstream vShaderFile;
-        std::ifstream fShaderFile;
-        std::ifstream gShaderFile;
-        // ensure ifstream objects can throw exceptions:
-        vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        gShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        std::string tessControlCode;
+        std::string tessEvalCode;
+
         try
         {
             if (vertexPath != nullptr)
             {
-                vShaderFile.open(vertexPath);
-                std::stringstream vShaderStream;
-                vShaderStream << vShaderFile.rdbuf();
-                vShaderFile.close();
-                vertexCode = vShaderStream.str();
+                vertexCode = openAndReadFile(vertexPath);
+                findAndIncludeFiles(vertexCode);
             }
 
             if (fragmentPath != nullptr)
             {
-                fShaderFile.open(fragmentPath);
-                std::stringstream fShaderStream;
-                fShaderStream << fShaderFile.rdbuf();
-                fShaderFile.close();
-                fragmentCode = fShaderStream.str();
+                fragmentCode = openAndReadFile(fragmentPath);
+                findAndIncludeFiles(fragmentCode);
             }
 
             if (geometryPath != nullptr)
             {
-                gShaderFile.open(geometryPath);
-                std::stringstream gShaderStream;
-                gShaderStream << gShaderFile.rdbuf();
-                gShaderFile.close();
-                geometryCode = gShaderStream.str();
+                geometryCode = openAndReadFile(geometryPath);
+                findAndIncludeFiles(geometryCode);
             }
+
+
+            if (tessControlPath != nullptr)
+            {
+                tessControlCode = openAndReadFile(tessControlPath);
+                findAndIncludeFiles(tessControlCode);
+            }
+
+            if (tessEvalPath != nullptr)
+            {
+                tessEvalCode = openAndReadFile(tessEvalPath);
+                findAndIncludeFiles(tessEvalCode);
+            }
+
         }
         catch (std::ifstream::failure& e)
         {
@@ -97,6 +98,24 @@ public:
             glCompileShader(geometry);
             checkCompileErrors(geometry, "GEOMETRY");
         }
+        unsigned int tessControl;
+        if (tessControlPath != nullptr)
+        {
+            const char* tcShaderCode = tessControlCode.c_str();
+            tessControl = glCreateShader(GL_TESS_CONTROL_SHADER);
+            glShaderSource(tessControl, 1, &tcShaderCode, NULL);
+            glCompileShader(tessControl);
+            checkCompileErrors(tessControl, "TESS_CONTROL");
+        }
+        unsigned int tessEval;
+        if (tessEvalPath != nullptr)
+        {
+            const char* teShaderCode = tessEvalCode.c_str();
+            tessEval = glCreateShader(GL_TESS_EVALUATION_SHADER);
+            glShaderSource(tessEval, 1, &teShaderCode, NULL);
+            glCompileShader(tessEval);
+            checkCompileErrors(tessEval, "TESS_EVAL");
+        }
         // shader Program
         ID = glCreateProgram();
         if(vertexPath != nullptr)
@@ -105,6 +124,10 @@ public:
             glAttachShader(ID, fragment);
         if (geometryPath != nullptr)
             glAttachShader(ID, geometry);
+        if (tessControlPath != nullptr)
+            glAttachShader(ID, tessControl);
+        if (tessEvalPath != nullptr)
+            glAttachShader(ID, tessEval);
 
         if (link)
         {
@@ -120,6 +143,12 @@ public:
 
         if (geometryPath != nullptr)
             glDeleteShader(geometry);
+
+        if (tessControlPath != nullptr)
+            glDeleteShader(tessControl);
+
+        if (tessEvalPath != nullptr)
+            glDeleteShader(tessEval);
 
         return true;
     }
@@ -219,6 +248,48 @@ private:
                 glGetProgramInfoLog(shader, 1024, NULL, infoLog);
                 std::cout << "ERROR::PROGRAM_LINKING_ERROR of type: " << type << "\n" << infoLog << "\n -- --------------------------------------------------- -- " << std::endl;
             }
+        }
+    }
+
+    std::string openAndReadFile(const char* path) const
+    {
+        std::string code;
+        std::ifstream file;
+
+        file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+        try
+        {
+            if (path != nullptr)
+            {
+                file.open(path);
+                std::stringstream stream;
+                stream << file.rdbuf();
+                file.close();
+                code = stream.str();
+                return code;
+            }
+        }
+        catch (std::ifstream::failure& e)
+        {
+            std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << e.what() << std::endl;
+        }
+        return "";
+    }
+
+    void findAndIncludeFiles(std::string& code) const
+    {
+        size_t pos = 0;
+        while ((pos = code.find("INCLUDE")) != std::string::npos)
+        {
+            size_t fileBegin = code.find("\"", pos);
+            size_t fileEnd = code.find("\"", fileBegin + 1);
+
+            std::string fileName = code.substr(fileBegin + 1, fileEnd - fileBegin - 1);
+
+            std::string includeCode = openAndReadFile(fileName.c_str());
+
+            code.replace(code.begin() + pos, code.begin() + fileEnd + 1, includeCode);
         }
     }
 

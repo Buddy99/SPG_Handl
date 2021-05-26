@@ -90,6 +90,10 @@ void setupShadersTexturesBuffers()
     filterShader = new Shader();
     filterShader->load("shader/blur.vs", "shader/blur.fs");
 
+    // Shader for Tessellation
+    tessellationShader = new Shader();
+    tessellationShader->load("shader/tessellation.vs", "shader/tessellation.fs", nullptr, "shader/tessellation.tcs", "shader/tessellation.tes");
+
     // Shader for particle system
     particleSystem.InitParticleSystem();
     // Particle texture
@@ -113,6 +117,7 @@ void setupShadersTexturesBuffers()
     normalMap = loadTexture(std::filesystem::absolute("resources/stone_normal.jpg").string().c_str());
     heightMap = loadTexture(std::filesystem::absolute("resources/stone_displacement.jpg").string().c_str());
     floorTexture = loadTexture(std::filesystem::absolute("resources/grass.jpg").string().c_str());
+    tessellationTexture = loadTexture(std::filesystem::absolute("resources/wood.jpg").string().c_str());
 
     // 3D texture
     glGenTextures(1, &tex3D);
@@ -217,6 +222,14 @@ void setupShadersTexturesBuffers()
     thirdObject->mModelMatrix = modelMatrix;
 
     filterPlane = new Plane();
+
+    // Tessellation Plane
+    tessellationPlane = new Plane();
+    modelMatrix = glm::mat4(1.0f);
+    modelMatrix = glm::scale(modelMatrix, glm::vec3(3.0f, 3.0f, 3.0f));
+    modelMatrix = glm::rotate(modelMatrix, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(3.0f, 5.0f, 3.0f));
+    tessellationPlane->mModelMatrix = modelMatrix;
 
     // Setup Text Renderer
     textRenderer.LoadShader("shader/text.vs", "shader/text.fs");
@@ -398,6 +411,29 @@ void renderScene()
 
     wall->Draw();
 
+    // Tessellation
+    // ------------------
+
+    // Render plane
+    tessellationShader->use();
+    tessellationShader->setMat4("projection", projection);
+    tessellationShader->setMat4("view", view);
+    tessellationShader->setFloat("tessellationFactor", tessellationFactor);
+    tessellationShader->setMat4("model", tessellationPlane->mModelMatrix);
+    
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, tessellationTexture);
+
+    // Draw in Wireframe-Mode if Space is pressed
+    if (wireframeMode)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+
+    tessellationPlane->Draw(true);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
     // Shadows
     // ------------------
 
@@ -451,6 +487,7 @@ void onExit()
     delete displacementShader;
     delete floorShader;
     delete filterShader;
+    delete tessellationShader;
 
     // Delete planes
     delete wall;
@@ -459,6 +496,7 @@ void onExit()
     delete secondObject;
     delete thirdObject;
     delete filterPlane;
+    delete tessellationPlane;
 
     // Delete textures
     delete depthMap;
@@ -683,6 +721,33 @@ void processInput(GLFWwindow* window)
         }
     }
 
+    // Tessellation
+    // ------------
+
+    // Decrease the tessellation factor
+    if (keyHandler.IsKeyDown(GLFW_KEY_V))
+    {
+        if (tessellationFactor > 0.0f)
+        {
+            tessellationFactor -= 1.0f;
+        }
+        else
+        {
+            tessellationFactor = 0.0f;
+        }
+    }
+    // Increase the tessellation factor
+    if (keyHandler.IsKeyDown(GLFW_KEY_B))
+    {
+        if (tessellationFactor < 50.0f)
+        {
+            tessellationFactor += 1.0f;
+        }
+        else
+        {
+            tessellationFactor = 50.0f;
+        }
+    }
 
     // Get Position and rotation of the camera
     if (keyHandler.WasKeyReleased(GLFW_KEY_C))
