@@ -133,7 +133,6 @@ Plane* filterPlane;
 // Tessellation
 Plane* tessellationPlane;
 float tessellationFactor = 1.0f;
-unsigned int tessellationTexture;
 
 // Shadows
 unsigned int depthMapFbo;

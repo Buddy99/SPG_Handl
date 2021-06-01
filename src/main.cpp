@@ -117,7 +117,6 @@ void setupShadersTexturesBuffers()
     normalMap = loadTexture(std::filesystem::absolute("resources/stone_normal.jpg").string().c_str());
     heightMap = loadTexture(std::filesystem::absolute("resources/stone_displacement.jpg").string().c_str());
     floorTexture = loadTexture(std::filesystem::absolute("resources/grass.jpg").string().c_str());
-    tessellationTexture = loadTexture(std::filesystem::absolute("resources/wood.jpg").string().c_str());
 
     // 3D texture
     glGenTextures(1, &tex3D);
@@ -228,7 +227,7 @@ void setupShadersTexturesBuffers()
     modelMatrix = glm::mat4(1.0f);
     modelMatrix = glm::scale(modelMatrix, glm::vec3(3.0f, 3.0f, 3.0f));
     modelMatrix = glm::rotate(modelMatrix, glm::radians(180.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-    modelMatrix = glm::translate(modelMatrix, glm::vec3(3.0f, 5.0f, 3.0f));
+    modelMatrix = glm::translate(modelMatrix, glm::vec3(3.0f, 3.0f, 0.0f));
     tessellationPlane->mModelMatrix = modelMatrix;
 
     // Setup Text Renderer
@@ -420,9 +419,6 @@ void renderScene()
     tessellationShader->setMat4("view", view);
     tessellationShader->setFloat("tessellationFactor", tessellationFactor);
     tessellationShader->setMat4("model", tessellationPlane->mModelMatrix);
-    
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, tessellationTexture);
 
     // Draw in Wireframe-Mode if Space is pressed
     if (wireframeMode)
@@ -630,7 +626,7 @@ void processInput(GLFWwindow* window)
     }
 
     // Decrease the displacement mapping steps
-    if (keyHandler.WasKeyReleased(GLFW_KEY_J))
+    if (keyHandler.IsKeyDown(GLFW_KEY_J))
     {
         if (steps > 1.0f)
         {
@@ -642,7 +638,7 @@ void processInput(GLFWwindow* window)
         }
     }
     // Increase the displacement mapping steps
-    if (keyHandler.WasKeyReleased(GLFW_KEY_K))
+    if (keyHandler.IsKeyDown(GLFW_KEY_K))
     {
         if (steps < 50.0f)
         {
@@ -655,7 +651,7 @@ void processInput(GLFWwindow* window)
     }
 
     // Decrease the displacement mapping refinement steps
-    if (keyHandler.WasKeyReleased(GLFW_KEY_I))
+    if (keyHandler.IsKeyDown(GLFW_KEY_I))
     {
         if (refinementSteps > 1.0f)
         {
@@ -667,7 +663,7 @@ void processInput(GLFWwindow* window)
         }
     }
     // Increase the displacement mapping refinement steps
-    if (keyHandler.WasKeyReleased(GLFW_KEY_O))
+    if (keyHandler.IsKeyDown(GLFW_KEY_O))
     {
         if (refinementSteps < 50.0f)
         {
@@ -683,11 +679,11 @@ void processInput(GLFWwindow* window)
     // -----------------
 
     // Decrease time it takes to spawn a new generation of particles (update rate)
-    if (keyHandler.WasKeyReleased(GLFW_KEY_G))
+    if (keyHandler.IsKeyDown(GLFW_KEY_G))
     {
         if (particleSystem.mUpdateRate > 0.01f)
         {
-            particleSystem.mUpdateRate -= 0.02f;
+            particleSystem.mUpdateRate -= 0.01f;
         }
         else
         {
@@ -695,11 +691,11 @@ void processInput(GLFWwindow* window)
         }
     }
     // Increase time it takes to spawn a new generation of particles (update rate)
-    if (keyHandler.WasKeyReleased(GLFW_KEY_H))
+    if (keyHandler.IsKeyDown(GLFW_KEY_H))
     {
         if (particleSystem.mUpdateRate < 1.0f)
         {
-            particleSystem.mUpdateRate += 0.02f;
+            particleSystem.mUpdateRate += 0.01f;
         }
         else
         {
@@ -729,7 +725,7 @@ void processInput(GLFWwindow* window)
     {
         if (tessellationFactor > 0.0f)
         {
-            tessellationFactor -= 1.0f;
+            tessellationFactor -= 0.1f;
         }
         else
         {
@@ -741,7 +737,7 @@ void processInput(GLFWwindow* window)
     {
         if (tessellationFactor < 50.0f)
         {
-            tessellationFactor += 1.0f;
+            tessellationFactor += 0.1f;
         }
         else
         {

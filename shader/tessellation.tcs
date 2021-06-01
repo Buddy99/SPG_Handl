@@ -8,6 +8,7 @@ void main(void)
 {
     if(gl_InvocationID == 0)
     {
+        // Set the interactive tesselationFactor to all vertices
         gl_TessLevelInner[0] = tessellationFactor;
         gl_TessLevelOuter[0] = tessellationFactor;
         gl_TessLevelOuter[1] = tessellationFactor;
